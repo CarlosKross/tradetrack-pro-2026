@@ -1,0 +1,148 @@
+{
+  "appId": "tradetrack-pro-2026",
+  "version": "1.0.0",
+  "auditType": "horeca_pdv",
+  "configVersion": "1.0.0",
+  "offline": {
+    "enabled": true,
+    "maxLocalAudits": 15,
+    "syncOnConnect": true
+  },
+  "photos": {
+    "maxWidthPx": 1280,
+    "jpegQuality": 0.7,
+    "watermark": {
+      "enabled": true,
+      "includeDateTime": true,
+      "includeUserId": true,
+      "includePdvId": true,
+      "includeGps": true
+    }
+  },
+  "scoring": {
+    "max": 100,
+    "categories": [
+      { "name": "Bronce", "min": 0,  "max": 50,  "color": "#CD7F32", "emoji": "🥉" },
+      { "name": "Plata",  "min": 51, "max": 80,  "color": "#C0C0C0", "emoji": "🥈" },
+      { "name": "Oro",    "min": 81, "max": 100, "color": "#FFD700", "emoji": "🥇" }
+    ]
+  },
+  "pdvSelector": {
+    "searchFields": ["pdvId", "name", "fantasyName", "executiveName", "address", "zone"],
+    "displayFields": ["fantasyName", "executiveName", "name", "pdvId", "address", "zone"],
+    "minChars": 2,
+    "maxResults": 8
+  },
+  "user": {
+    "userId": "USR-1029",
+    "name": "Usuario Demo"
+  },
+  "sections": [
+    {
+      "sectionId": "posicionamiento",
+      "title": "Posicionamiento de Marca",
+      "icon": "🍺",
+      "questions": [
+        {
+          "questionId": "q_salidas_totales",
+          "label": "¿Cuántas salidas totales tiene?",
+          "type": "number",
+          "required": true,
+          "photo": "optional",
+          "scoreValue": 10,
+          "placeholder": "Ej: 8",
+          "hint": "Total de grifos / líneas de schop activos"
+        },
+        {
+          "questionId": "q_marca_mayor_venta",
+          "label": "¿Qué marca es la de mayor venta?",
+          "type": "text",
+          "required": true,
+          "photo": "optional",
+          "scoreValue": 10,
+          "placeholder": "Ej: Kunstmann, Austral, LOA...",
+          "hint": "Marca líder actual en este PDV"
+        },
+        {
+          "questionId": "q_valor_schop",
+          "label": "¿Cuál es el valor de schop Kross vs más vendida? ($)",
+          "type": "number",
+          "required": true,
+          "photo": "optional",
+          "scoreValue": 10,
+          "placeholder": "Ej: 2500",
+          "hint": "Precio de venta al público del schop Kross"
+        },
+        {
+          "questionId": "q_ejecucion_carta",
+          "label": "¿Cómo estamos ejecutados en carta?",
+          "type": "textarea",
+          "required": true,
+          "photo": "optional",
+          "scoreValue": 10,
+          "placeholder": "Describe cómo aparece Kross en la carta del local...",
+          "hint": "Posición, nombre, descripción, precio en la carta"
+        }
+      ]
+    },
+    {
+      "sectionId": "ejecucion_visibilidad",
+      "title": "Ejecución y Visibilidad de Marca",
+      "icon": "👁️",
+      "questions": [
+        {
+          "questionId": "q_letrero_luminoso",
+          "label": "Tiene letrero luminoso / ojo de buey",
+          "type": "text",
+          "required": true,
+          "photo": "required",
+          "scoreValue": 15,
+          "placeholder": "Ej: Sí, frontal visible / No tiene / Dañado",
+          "hint": "Verificar estado y visibilidad del material POP luminoso"
+        },
+        {
+          "questionId": "q_beertaps",
+          "label": "Beertaps: ¿tiene beertap? ¿son nuevos o antiguos?",
+          "type": "select",
+          "required": true,
+          "photo": "required",
+          "scoreValue": 15,
+          "hint": "Estado actual del equipo beertap Kross",
+          "options": [
+            { "value": "no_tiene",  "label": "No tiene" },
+            { "value": "antiguos",  "label": "Antiguos" },
+            { "value": "nuevos",    "label": "Nuevos" }
+          ]
+        },
+        {
+          "questionId": "q_table_tent",
+          "label": "Table tent: ¿tiene?",
+          "type": "yesno",
+          "required": true,
+          "photo": "required",
+          "scoreValue": 10,
+          "hint": "Presencia de table tents Kross en mesas"
+        },
+        {
+          "questionId": "q_portaplacas",
+          "label": "Portaplacas: ¿correctos?",
+          "type": "yesno",
+          "required": true,
+          "photo": "required",
+          "scoreValue": 10,
+          "hint": "Portaplacas con imagen de marca correcta y vigente"
+        },
+        {
+          "questionId": "q_carta_nombre",
+          "label": "Carta: ¿aparecemos con un buen nombre?",
+          "type": "text",
+          "required": true,
+          "photo": "required",
+          "scoreValue": 10,
+          "placeholder": "Ej: Kross Dorada, Kross Märzen Premium...",
+          "hint": "Nombre exacto con el que aparece Kross en la carta"
+        }
+      ]
+    }
+  ]
+}
