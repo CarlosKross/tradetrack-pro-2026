@@ -8,12 +8,22 @@ export function flattenQuestions(config) {
 }
 
 // ── Determina si una pregunta es visible según las respuestas actuales ─────────
-// (hook para lógica condicional futura; por ahora todas son visibles)
 export function isQuestionVisible(question, answers) {
   if (!question.condition) return true;
   const { dependsOn, equals } = question.condition;
   const dep = answers[dependsOn];
   return dep !== undefined && String(dep.value) === String(equals);
+}
+
+// ── Parsea valor multiselect (JSON array string) ───────────────────────────────
+function parseMultiselect(val) {
+  if (!val) return [];
+  try { const p = JSON.parse(val); return Array.isArray(p) ? p : []; } catch { return []; }
+}
+
+// ── Determina si un valor multiselect tiene al menos una opción ────────────────
+function hasMultiselectValue(val) {
+  return parseMultiselect(val).length > 0;
 }
 
 // ── Valida un checklist completo ───────────────────────────────────────────────
@@ -31,7 +41,9 @@ export function validateChecklist(config, answers, selectedPdv) {
 
     const ans = answers[q.questionId];
     const val = ans?.value;
-    const hasValue = val !== undefined && val !== null && String(val).trim() !== '';
+    const hasValue = q.type === 'multiselect'
+      ? hasMultiselectValue(val)
+      : val !== undefined && val !== null && String(val).trim() !== '';
 
     if (q.required && !hasValue) {
       errors.push({
@@ -68,13 +80,17 @@ export function calculateScore(config, answers) {
 
     const ans = answers[q.questionId];
     const val = ans?.value;
-    if (val === undefined || val === null || String(val).trim() === '') continue;
+    const hasVal = q.type === 'multiselect'
+      ? hasMultiselectValue(val)
+      : val !== undefined && val !== null && String(val).trim() !== '';
+    if (!hasVal) continue;
 
     if (q.type === 'yesno') {
       if (val === 'si') total += q.scoreValue;
-      // 'no' = respondido pero sin puntos
     } else if (q.type === 'select') {
       if (val && val !== 'no_tiene') total += q.scoreValue;
+    } else if (q.type === 'multiselect') {
+      total += q.scoreValue;
     } else {
       total += q.scoreValue;
     }

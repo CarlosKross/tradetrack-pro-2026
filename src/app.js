@@ -184,8 +184,9 @@ function renderSections() {
 function renderQuestion(q) {
   const photoRequired = q.photo === 'required';
   const photoAllowed  = q.photo === 'required' || q.photo === 'optional';
+  const visible = isQuestionVisible(q);
   return `
-    <div class="question-block" id="qblock-${q.questionId}">
+    <div class="question-block${visible ? '' : ' question-hidden'}" id="qblock-${q.questionId}" data-condition='${q.condition ? JSON.stringify(q.condition) : ''}'>
       <div class="question-header-row">
         <label class="question-label" for="field-${q.questionId}">
           ${esc(q.label)}
@@ -199,17 +200,37 @@ function renderQuestion(q) {
       ${q.hint ? `<div class="question-hint">${esc(q.hint)}</div>` : ''}
       <div class="question-input-row">
         <div class="question-input-wrap">${renderInput(q)}</div>
-        ${photoAllowed ? `
-          <label class="btn-camera" title="Tomar foto" for="photo-${q.questionId}">
-            <span>📷</span>
-            <input type="file" id="photo-${q.questionId}" accept="image/*" capture="environment"
-              class="photo-file-input" data-qid="${q.questionId}" />
-          </label>
-        ` : ''}
+        ${photoAllowed ? renderMediaButtons(q) : ''}
       </div>
       <div class="photo-thumbnails" id="thumbs-${q.questionId}"></div>
     </div>
   `;
+}
+
+function renderMediaButtons(q) {
+  return `
+    <div class="media-buttons">
+      <label class="btn-camera" title="Tomar foto (cámara)" for="photo-${q.questionId}">
+        <span>📷</span>
+        <input type="file" id="photo-${q.questionId}" accept="image/*" capture="environment"
+          class="photo-file-input" data-qid="${q.questionId}" />
+      </label>
+      ${q.gallery !== false ? `
+      <label class="btn-gallery" title="Adjuntar desde galería/archivo" for="gallery-${q.questionId}">
+        <span>🖼️</span>
+        <input type="file" id="gallery-${q.questionId}" accept="image/*,application/pdf"
+          class="photo-file-input" data-qid="${q.questionId}" multiple />
+      </label>
+      ` : ''}
+    </div>
+  `;
+}
+
+function isQuestionVisible(q) {
+  if (!q.condition) return true;
+  const { dependsOn, equals } = q.condition;
+  const depAnswer = state.answers[dependsOn];
+  return depAnswer !== undefined && String(depAnswer.value) === String(equals);
 }
 
 function renderInput(q) {
@@ -232,10 +253,32 @@ function renderInput(q) {
         <button type="button" class="yesno-btn ${val === 'si' ? 'active-yes' : ''}" data-qid="${q.questionId}" data-val="si">Sí</button>
         <button type="button" class="yesno-btn ${val === 'no' ? 'active-no'  : ''}" data-qid="${q.questionId}" data-val="no">No</button>
       </div>`;
+    case 'multiselect': {
+      const selected = parseMultiselect(val);
+      const otrosText = selected.find(v => v.startsWith('otros:'))?.replace('otros:', '') || '';
+      const otrosChecked = selected.some(v => v === 'otros' || v.startsWith('otros:'));
+      return `<div class="multiselect-group" data-qid="${q.questionId}">
+        ${(q.options || []).map(o => `
+          <label class="ms-option ${selected.some(v => v === o.value || (o.value === 'otros' && v.startsWith('otros:'))) ? 'ms-checked' : ''}">
+            <input type="checkbox" class="ms-checkbox" data-qid="${q.questionId}" data-val="${esc(o.value)}"
+              ${selected.some(v => v === o.value || (o.value === 'otros' && v.startsWith('otros:'))) ? 'checked' : ''} />
+            <span class="ms-label">${esc(o.label)}</span>
+          </label>
+          ${o.hasText ? `<input type="text" class="field-input ms-otros-text ${otrosChecked ? '' : 'hidden'}"
+            id="otros-text-${q.questionId}" data-qid="${q.questionId}" data-otros="1"
+            placeholder="Especifica el material..." value="${esc(otrosText)}" />` : ''}
+        `).join('')}
+      </div>`;
+    }
     default:
       return `<input type="text" id="${id}" class="field-input" data-qid="${q.questionId}"
                 placeholder="${esc(q.placeholder || '')}" value="${esc(String(val))}" />`;
   }
+}
+
+function parseMultiselect(val) {
+  if (!val) return [];
+  try { const p = JSON.parse(val); return Array.isArray(p) ? p : []; } catch { return []; }
 }
 
 // ── Bottom Bar ─────────────────────────────────────────────────────────────────
@@ -275,8 +318,9 @@ function attachAllListeners() {
 
 function handleFieldInput(e) {
   const qid = e.target.dataset?.qid;
-  if (!qid || e.target.type === 'file') return;
-  if (e.target.tagName === 'SELECT') return; // handled in change
+  if (!qid || e.target.type === 'file' || e.target.type === 'checkbox') return;
+  if (e.target.tagName === 'SELECT') return;
+  if (e.target.dataset.otros) { handleOtrosText(qid, e.target.value); return; }
   setAnswer(qid, e.target.value);
 }
 
@@ -284,7 +328,41 @@ function handleFieldChange(e) {
   const qid = e.target.dataset?.qid;
   if (!qid) return;
   if (e.target.type === 'file') { handlePhotoCapture(e); return; }
+  if (e.target.type === 'checkbox') { handleMultiselectChange(e); return; }
   if (e.target.tagName === 'SELECT') setAnswer(qid, e.target.value);
+}
+
+function handleMultiselectChange(e) {
+  const qid = e.target.dataset?.qid;
+  const optVal = e.target.dataset?.val;
+  if (!qid || !optVal) return;
+
+  const current = parseMultiselect(state.answers[qid]?.value);
+  let updated;
+
+  if (e.target.checked) {
+    updated = [...current.filter(v => v !== optVal && !v.startsWith(optVal + ':')), optVal];
+  } else {
+    updated = current.filter(v => v !== optVal && !v.startsWith(optVal + ':'));
+  }
+
+  // Toggle "Otros" text field visibility
+  const otrosText = document.getElementById(`otros-text-${qid}`);
+  if (otrosText) {
+    if (updated.includes('otros')) otrosText.classList.remove('hidden');
+    else { otrosText.classList.add('hidden'); otrosText.value = ''; updated = updated.filter(v => !v.startsWith('otros:')); }
+  }
+
+  // Update label styles
+  e.target.closest('.ms-option')?.classList.toggle('ms-checked', e.target.checked);
+
+  setAnswer(qid, JSON.stringify(updated));
+}
+
+function handleOtrosText(qid, text) {
+  const current = parseMultiselect(state.answers[qid]?.value);
+  const updated = current.filter(v => !v.startsWith('otros:')).concat(text ? [`otros:${text}`] : ['otros']);
+  setAnswer(qid, JSON.stringify(updated));
 }
 
 function handleSectionClick(e) {
@@ -298,10 +376,24 @@ function handleSectionClick(e) {
       b.classList.toggle('active-yes', b.dataset.val === 'si' && val === 'si');
       b.classList.toggle('active-no',  b.dataset.val === 'no' && val === 'no');
     });
+    updateConditionalVisibility();
     return;
   }
   const delBtn = e.target.closest('.thumb-delete');
   if (delBtn) removeImage(delBtn.dataset.qid, delBtn.dataset.imgid);
+}
+
+function updateConditionalVisibility() {
+  document.querySelectorAll('.question-block[data-condition]').forEach(block => {
+    const raw = block.dataset.condition;
+    if (!raw) return;
+    try {
+      const cond = JSON.parse(raw);
+      const dep = state.answers[cond.dependsOn];
+      const visible = dep !== undefined && String(dep.value) === String(cond.equals);
+      block.classList.toggle('question-hidden', !visible);
+    } catch (_) {}
+  });
 }
 
 // ── PDV Search ─────────────────────────────────────────────────────────────────
@@ -354,6 +446,7 @@ function selectPdv(pdvId) {
 function setAnswer(qid, value) {
   if (!state.answers[qid]) state.answers[qid] = { value: null, images: [] };
   state.answers[qid].value = value;
+  updateConditionalVisibility();
   updateScore();
   updateSaveButton();
   markFieldOk(qid);

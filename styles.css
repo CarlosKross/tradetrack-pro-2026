@@ -606,3 +606,40 @@ body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+
+/* ── Media buttons (cámara + galería) ─────────────────────────────────────── */
+.media-buttons { display: flex; flex-direction: column; gap: .35rem; flex-shrink: 0; }
+.btn-gallery {
+  display: flex; align-items: center; justify-content: center;
+  width: 48px; height: 44px;
+  border-radius: var(--radius-sm);
+  background: #2d4a7a; color: #fff; font-size: 1.2rem;
+  cursor: pointer; flex-shrink: 0;
+  transition: background .15s, transform .1s;
+  border: 2px solid transparent; user-select: none;
+}
+.btn-gallery:hover  { background: #3a5f9e; }
+.btn-gallery:active { transform: scale(.93); }
+
+/* ── Multiselect ──────────────────────────────────────────────────────────── */
+.multiselect-group { display: flex; flex-direction: column; gap: .4rem; width: 100%; }
+.ms-option {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .6rem .8rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer; background: #f8fafc;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.ms-option:hover   { background: #fef3e2; border-color: var(--color-accent); }
+.ms-option.ms-checked { background: #fef3e2; border-color: var(--color-accent); }
+.ms-checkbox { width: 18px; height: 18px; accent-color: var(--color-accent); cursor: pointer; flex-shrink: 0; }
+.ms-label    { font-size: .92rem; font-weight: 500; color: var(--color-text); }
+.ms-otros-text { margin-top: .25rem; }
+.ms-otros-text.hidden { display: none; }
+
+/* ── Pregunta condicional oculta ─────────────────────────────────────────── */
+.question-hidden {
+  display: none !important;
+}

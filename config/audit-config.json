@@ -1,8 +1,8 @@
 {
   "appId": "tradetrack-pro-2026",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "auditType": "horeca_pdv",
-  "configVersion": "1.0.0",
+  "configVersion": "1.1.0",
   "offline": {
     "enabled": true,
     "maxLocalAudits": 15,
@@ -49,7 +49,8 @@
           "type": "number",
           "required": true,
           "photo": "optional",
-          "scoreValue": 10,
+          "gallery": true,
+          "scoreValue": 5,
           "placeholder": "Ej: 8",
           "hint": "Total de grifos / líneas de schop activos"
         },
@@ -59,7 +60,8 @@
           "type": "text",
           "required": true,
           "photo": "optional",
-          "scoreValue": 10,
+          "gallery": true,
+          "scoreValue": 5,
           "placeholder": "Ej: Kunstmann, Austral, LOA...",
           "hint": "Marca líder actual en este PDV"
         },
@@ -69,7 +71,8 @@
           "type": "number",
           "required": true,
           "photo": "optional",
-          "scoreValue": 10,
+          "gallery": true,
+          "scoreValue": 5,
           "placeholder": "Ej: 2500",
           "hint": "Precio de venta al público del schop Kross"
         },
@@ -79,7 +82,8 @@
           "type": "textarea",
           "required": true,
           "photo": "optional",
-          "scoreValue": 10,
+          "gallery": true,
+          "scoreValue": 5,
           "placeholder": "Describe cómo aparece Kross en la carta del local...",
           "hint": "Posición, nombre, descripción, precio en la carta"
         }
@@ -91,14 +95,36 @@
       "icon": "👁️",
       "questions": [
         {
-          "questionId": "q_letrero_luminoso",
-          "label": "Tiene letrero luminoso / ojo de buey",
-          "type": "text",
+          "questionId": "q_material_pop",
+          "label": "¿Qué material POP hay visible en el local?",
+          "type": "multiselect",
           "required": true,
           "photo": "required",
+          "gallery": true,
           "scoreValue": 15,
-          "placeholder": "Ej: Sí, frontal visible / No tiene / Dañado",
-          "hint": "Verificar estado y visibilidad del material POP luminoso"
+          "hint": "Selecciona todo el material de marca presente en el PDV",
+          "options": [
+            { "value": "laton",       "label": "Latón" },
+            { "value": "ojo_buey",    "label": "Ojo de Buey" },
+            { "value": "flange",      "label": "Flange" },
+            { "value": "volumetrico", "label": "Volumétrico" },
+            { "value": "otros",       "label": "Otros", "hasText": true }
+          ]
+        },
+        {
+          "questionId": "q_letrero_estado",
+          "label": "Letrero luminoso / Ojo de buey: ¿en qué estado está?",
+          "type": "select",
+          "required": true,
+          "photo": "required",
+          "gallery": true,
+          "scoreValue": 10,
+          "hint": "Verificar presencia y estado del material POP luminoso",
+          "options": [
+            { "value": "no_tiene",  "label": "No tiene" },
+            { "value": "nuevo",     "label": "Tiene — Material nuevo" },
+            { "value": "antiguo",   "label": "Tiene — Material antiguo" }
+          ]
         },
         {
           "questionId": "q_beertaps",
@@ -106,7 +132,8 @@
           "type": "select",
           "required": true,
           "photo": "required",
-          "scoreValue": 15,
+          "gallery": true,
+          "scoreValue": 10,
           "hint": "Estado actual del equipo beertap Kross",
           "options": [
             { "value": "no_tiene",  "label": "No tiene" },
@@ -115,13 +142,42 @@
           ]
         },
         {
+          "questionId": "q_cristaleria",
+          "label": "¿Qué tipo de cristalería posee?",
+          "type": "select",
+          "required": true,
+          "photo": "required",
+          "gallery": true,
+          "scoreValue": 10,
+          "hint": "Modelo de vaso Kross presente en el PDV",
+          "options": [
+            { "value": "willi",  "label": "Modelo Willi (vaso cónico claro)" },
+            { "value": "brent",  "label": "Modelo Brent (vaso slim)" },
+            { "value": "rastal", "label": "Jarro Rastal (jarro con asa)" },
+            { "value": "conic",  "label": "Conic (pinta cónica)" },
+            { "value": "no_tiene","label": "No tiene cristalería Kross" }
+          ]
+        },
+        {
           "questionId": "q_table_tent",
           "label": "Table tent: ¿tiene?",
           "type": "yesno",
           "required": true,
           "photo": "required",
-          "scoreValue": 10,
+          "gallery": true,
+          "scoreValue": 5,
           "hint": "Presencia de table tents Kross en mesas"
+        },
+        {
+          "questionId": "q_table_tent_publicidad",
+          "label": "Table tent: ¿tiene publicidad de la marca Kross?",
+          "type": "yesno",
+          "required": true,
+          "photo": "optional",
+          "gallery": true,
+          "scoreValue": 5,
+          "hint": "Confirmar que el table tent muestre imagen/marca Kross vigente",
+          "condition": { "dependsOn": "q_table_tent", "equals": "si" }
         },
         {
           "questionId": "q_portaplacas",
@@ -129,6 +185,7 @@
           "type": "yesno",
           "required": true,
           "photo": "required",
+          "gallery": true,
           "scoreValue": 10,
           "hint": "Portaplacas con imagen de marca correcta y vigente"
         },
@@ -138,6 +195,7 @@
           "type": "text",
           "required": true,
           "photo": "required",
+          "gallery": true,
           "scoreValue": 10,
           "placeholder": "Ej: Kross Dorada, Kross Märzen Premium...",
           "hint": "Nombre exacto con el que aparece Kross en la carta"
