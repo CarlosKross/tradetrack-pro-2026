@@ -12,7 +12,9 @@ const COLUMN_MAP = {
   fantasyName:   ['nombre fantasía', 'nombre de fantasía', 'fantasía', 'nombre fantasia', 'nombre de fantasia', 'fantasia', 'nombre de fantasía'],
   executiveName: ['nombre ejecutivo', 'ejecutivo', 'ejecutivo comercial', 'nombre_ejecutivo'],
   address:       ['dirección', 'direccion', 'address', 'dir', 'direccion completa', 'n + d'],
-  zone:          ['zona', 'ruta', 'territorio', 'zone', 'comuna', 'región', 'region'],
+  zone:          ['zona', 'ruta', 'territorio', 'zone', 'región', 'region'],
+  comuna:        ['comuna', 'localidad', 'ciudad'],
+  formato:       ['formato', 'format', 'tipo cliente', 'tipo', 'canal'],
   latitude:      ['latitud', 'latitude', 'lat'],
   longitude:     ['longitud', 'longitude', 'lng', 'lon'],
 };
@@ -95,7 +97,7 @@ function rowsToRecords(rows) {
   const normalizedHeaders = headers.map(normalizeHeader);
 
   // Buscar columnas de zona alternativas (la hoja Kross tiene Región + Comuna)
-  const regionCol = normalizedHeaders.findIndex(h => h === 'region' || h === 'región');
+  const regionCol = normalizedHeaders.findIndex(h => h === 'region' || h === 'region');
   const comunaCol = normalizedHeaders.findIndex(h => h === 'comuna');
 
   return dataRows
@@ -103,11 +105,11 @@ function rowsToRecords(rows) {
       const get = field => (idx[field] !== undefined ? (cols[idx[field]] || '').trim() : '');
 
       // Zona: combinar Región y Comuna si existen
+      const comunaVal = get('comuna') || (comunaCol >= 0 ? (cols[comunaCol] || '').trim() : '');
       let zone = get('zone');
       if (!zone) {
         const region = regionCol >= 0 ? (cols[regionCol] || '').trim() : '';
-        const comuna = comunaCol >= 0 ? (cols[comunaCol] || '').trim() : '';
-        zone = [comuna, region].filter(Boolean).join(' — ');
+        zone = [comunaVal, region].filter(Boolean).join(' — ');
       }
 
       const lat = parseFloat(get('latitude'));
@@ -119,6 +121,8 @@ function rowsToRecords(rows) {
         executiveName: get('executiveName'),
         address:       get('address'),
         zone,
+        comuna:        comunaVal,
+        formato:       get('formato'),
         latitude:      isNaN(lat) ? null : lat,
         longitude:     isNaN(lng) ? null : lng,
       };
@@ -180,6 +184,48 @@ export function searchPDV(query, searchFields, maxResults = 8) {
 
 export function getPDVById(pdvId) {
   return _records.find(r => r.pdvId === pdvId) || null;
+}
+
+// ── Devuelve valores únicos de un campo para filtros ──────────────────────────
+export function getUniqueValues(field) {
+  const seen = new Set();
+  const result = [];
+  for (const r of _records) {
+    const v = (r[field] || '').trim();
+    if (v && !seen.has(v)) { seen.add(v); result.push(v); }
+  }
+  return result.sort((a, b) => a.localeCompare(b, 'es'));
+}
+
+// ── Búsqueda filtrada (texto + filtros adicionales) ────────────────────────────
+export function filterPDV(query, searchFields, maxResults = 10, filters = {}) {
+  const q = (query || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const minChars = 2;
+  const hasText = q.length >= minChars;
+  const hasFilters = Object.values(filters).some(Boolean);
+
+  if (!hasText && !hasFilters) return [];
+
+  return _records
+    .filter(r => {
+      // Filtro por comuna
+      if (filters.comuna && (r.comuna || '').trim() !== filters.comuna) return false;
+      // Filtro por formato (barril / botella)
+      if (filters.formato) {
+        const fmt = (r.formato || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        const flt = filters.formato.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        if (!fmt.includes(flt)) return false;
+      }
+      // Filtro por texto
+      if (hasText) {
+        return searchFields.some(field => {
+          const val = String(r[field] || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+          return val.includes(q);
+        });
+      }
+      return true;
+    })
+    .slice(0, maxResults);
 }
 
 export function getSource() { return _source; }

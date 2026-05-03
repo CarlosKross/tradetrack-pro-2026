@@ -643,3 +643,95 @@ body {
 .question-hidden {
   display: none !important;
 }
+
+/* ── Filtros PDV ─────────────────────────────────────────────────────────── */
+.pdv-filters {
+  display: flex;
+  gap: .5rem;
+  margin-bottom: .75rem;
+  flex-wrap: wrap;
+}
+.filter-select {
+  flex: 1;
+  min-width: 130px;
+  padding: .5rem .75rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: .88rem;
+  background: #f8fafc;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.filter-select:focus { border-color: var(--color-accent); outline: none; }
+
+/* ── Tags en resultados de búsqueda ──────────────────────────────────────── */
+.result-tag {
+  display: inline-block;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: .1rem .45rem;
+  border-radius: 20px;
+  background: #1a1a2e;
+  color: #FFD700;
+  margin-left: .35rem;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.result-tag-comuna {
+  background: var(--color-accent);
+  color: #1a1a2e;
+}
+
+/* ── Selector visual de cristalería (image-select) ───────────────────────── */
+.image-select-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: .6rem;
+  width: 100%;
+}
+.img-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .4rem;
+  padding: .6rem .4rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #f8fafc;
+  cursor: pointer;
+  transition: border-color .18s, background .18s, transform .12s;
+  user-select: none;
+  text-align: center;
+}
+.img-option:hover {
+  border-color: var(--color-accent);
+  background: #fef9ee;
+  transform: translateY(-2px);
+}
+.img-option-selected {
+  border-color: var(--color-accent) !important;
+  background: #fef3e2 !important;
+  box-shadow: 0 0 0 3px rgba(232,160,32,.25);
+}
+.glass-img {
+  width: 64px;
+  height: 80px;
+  object-fit: contain;
+}
+.glass-img-placeholder {
+  width: 64px;
+  height: 80px;
+  background: linear-gradient(135deg, #e8f4fc, #d4e8f5);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.img-option-label {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.2;
+}

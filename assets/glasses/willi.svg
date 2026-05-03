@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 160" width="110" height="160">
+  <!-- WILLI — forma barril/nonic (más ancho en la parte superior) -->
+
+  <!-- Sombra base -->
+  <ellipse cx="55" cy="148" rx="32" ry="5" fill="rgba(0,0,0,0.08)"/>
+
+  <!-- Cuerpo del vaso (forma nonic: se ensancha hacia arriba) -->
+  <path d="M28,140 L22,62 Q20,22 36,10 L74,10 Q90,22 88,62 L82,140 Z"
+        fill="rgba(235,248,255,0.45)" stroke="#b0c4d8" stroke-width="1.8" stroke-linejoin="round"/>
+
+  <!-- Reflejos del vidrio (izquierda) -->
+  <path d="M24,120 L19,55 Q18,28 30,16" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M27,135 L22,80" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Cerveza (líquido ámbar) -->
+  <path d="M29,140 L23,64 Q21,26 37,13 L73,13 Q89,26 87,64 L81,140 Z"
+        fill="rgba(210,145,10,0.52)" clip-path="url(#glass-clip-w)"/>
+
+  <!-- Marca de 500ml -->
+  <line x1="30" y1="38" x2="40" y2="38" stroke="#999" stroke-width="1.2"/>
+  <text x="42" y="41" font-family="Arial" font-size="7" fill="#999">500ml</text>
+
+  <!-- Logo KROSS grande -->
+  <text x="55" y="90" text-anchor="middle"
+        font-family="Arial Black, Arial" font-weight="900" font-size="22"
+        fill="#E8A020" letter-spacing="1">KROSS</text>
+  <text x="55" y="102" text-anchor="middle"
+        font-family="Arial Black, Arial" font-weight="900" font-size="8"
+        fill="#E8A020" letter-spacing="2">™</text>
+
+  <!-- Texto inferior: CERVEZA KROSS -->
+  <text x="55" y="128" text-anchor="middle"
+        font-family="Arial" font-size="6.5" fill="#888" letter-spacing="1.5">CERVEZA KROSS</text>
+  <!-- Símbolo trigo pequeño -->
+  <text x="55" y="137" text-anchor="middle" font-size="8" fill="#999">⚜</text>
+
+  <!-- Base del vaso -->
+  <path d="M28,140 Q28,147 55,147 Q82,147 82,140" fill="rgba(200,225,240,0.5)" stroke="#b0c4d8" stroke-width="1.5"/>
+
+  <!-- Etiqueta -->
+  <text x="55" y="158" text-anchor="middle" font-family="Arial" font-size="10" fill="#444" font-weight="700">Willi</text>
+</svg>

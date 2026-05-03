@@ -1,40 +1,42 @@
-// sync-manager.js — Sincronización simulada con cola y reintentos
+// sync-manager.js — Sincronización real con Google Apps Script
 
-import { getAllAudits, updateAuditStatus, addToSyncQueue, getSyncQueue, removeSyncQueueEntry } from './db.js';
+import { getAllAudits, updateAuditStatus, removeSyncQueueEntry } from './db.js';
+
+// ── Configura aquí la URL del Web App de Google Apps Script ───────────────────
+// Después de desplegar gas/tradetrack-sync.gs, pega la URL aquí:
+export const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxCCrdCqonFVhK1vI6YFnf5OyQrmY1XDG6P7cHmujcOn_IIbdvireCdmbkPz7pTygEW/exec';
 
 const MAX_ATTEMPTS = 3;
-const UPLOAD_DELAY  = 600;  // ms por imagen (simulado)
-const AUDIT_DELAY   = 800;  // ms por auditoría (simulado)
 
-// ── Mocks de red ───────────────────────────────────────────────────────────────
-
-function fakeUploadImage(localImageId) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const fail = Math.random() < 0.12; // 12% de probabilidad de fallo
-      if (fail) {
-        reject(new Error('Network timeout'));
-      } else {
-        resolve({ serverImageId: `SRV-${Date.now()}-${Math.random().toString(36).slice(2,6).toUpperCase()}` });
-      }
-    }, UPLOAD_DELAY + Math.random() * 300);
+// ── Helper: POST al GAS evitando CORS preflight (usa text/plain) ──────────────
+// GAS no admite CORS headers propios; text/plain evita el OPTIONS preflight.
+async function gasPost(payload) {
+  const res = await fetch(GAS_ENDPOINT, {
+    method:  'POST',
+    // text/plain es un "simple request" → no dispara preflight OPTIONS
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body:    JSON.stringify(payload),
   });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return data;
 }
 
-function fakeUploadAudit(auditPayload) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const fail = Math.random() < 0.05; // 5% fallo
-      if (fail) {
-        reject(new Error('Server error 503'));
-      } else {
-        resolve({ serverId: `SERVER-AUD-${Date.now()}`, syncedAt: new Date().toISOString() });
-      }
-    }, AUDIT_DELAY);
-  });
+// ── Sube una imagen (base64 dataUrl) al GAS ────────────────────────────────────
+async function uploadImage({ localImageId, dataUrl, auditId, pdvId, questionId }) {
+  const data = await gasPost({ action: 'upload_image', localImageId, dataUrl, auditId, pdvId, questionId });
+  if (!data.ok) throw new Error(data.error || 'Error al subir imagen');
+  return data; // { serverImageId, serverImageUrl }
 }
 
-// ── Sincroniza todas las fotos de una auditoría ────────────────────────────────
+// ── Sube el payload completo de la auditoría al GAS ───────────────────────────
+async function uploadAudit(auditPayload) {
+  const data = await gasPost({ action: 'save_audit', audit: auditPayload });
+  if (!data.ok && !data.skipped) throw new Error(data.error || 'Error al guardar auditoría');
+  return data; // { ok, auditId, syncedAt } o { ok, skipped }
+}
+
+// ── Sincroniza imágenes de una auditoría ──────────────────────────────────────
 async function syncImages(audit, onProgress) {
   const updatedAnswers = JSON.parse(JSON.stringify(audit.answers));
 
@@ -43,16 +45,24 @@ async function syncImages(audit, onProgress) {
 
     for (const img of answer.images) {
       if (img.status === 'synced') continue;
+      if (!img.localUri) continue; // sin datos base64, no se puede subir
 
       let uploaded = false;
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         try {
           onProgress?.({ type: 'image_uploading', localImageId: img.localImageId, attempt });
-          const result = await fakeUploadImage(img.localImageId);
-          img.serverImageId = result.serverImageId;
-          img.status        = 'synced';
-          img.attempts      = attempt;
-          img.lastError     = null;
+          const result = await uploadImage({
+            localImageId: img.localImageId,
+            dataUrl:      img.localUri,
+            auditId:      audit.auditId,
+            pdvId:        audit.pdv?.pdvId || '',
+            questionId:   answer.questionId,
+          });
+          img.serverImageId  = result.serverImageId;
+          img.serverImageUrl = result.serverImageUrl;
+          img.status         = 'synced';
+          img.attempts       = attempt;
+          img.lastError      = null;
           uploaded = true;
           onProgress?.({ type: 'image_ok', localImageId: img.localImageId });
           break;
@@ -67,34 +77,29 @@ async function syncImages(audit, onProgress) {
           }
         }
       }
-
-      if (!uploaded && img.status === 'manual_error') {
-        // No bloqueamos la auditoría; continuamos con las demás fotos
-      }
     }
   }
 
   return updatedAnswers;
 }
 
-// ── Sincroniza una auditoría individual ────────────────────────────────────────
+// ── Sincroniza una auditoría completa ─────────────────────────────────────────
 async function syncAudit(audit, onProgress) {
   onProgress?.({ type: 'audit_start', auditId: audit.auditId });
 
   // 1. Subir fotos
   const updatedAnswers = await syncImages(audit, onProgress);
 
-  // 2. Subir auditoría
-  const payload = { ...audit, answers: updatedAnswers };
-  // Eliminar dataURLs del payload antes de enviar (sólo IDs de servidor)
-  const payloadClean = stripLocalImageData(payload);
+  // 2. Construir payload limpio (sin dataUrls base64)
+  const payloadClean = stripLocalImageData({ ...audit, answers: updatedAnswers });
 
+  // 3. Subir auditoría
   let syncResult = null;
   let lastErr = null;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
       onProgress?.({ type: 'audit_uploading', auditId: audit.auditId, attempt });
-      syncResult = await fakeUploadAudit(payloadClean);
+      syncResult = await uploadAudit(payloadClean);
       break;
     } catch (err) {
       lastErr = err;
@@ -104,17 +109,17 @@ async function syncAudit(audit, onProgress) {
 
   if (syncResult) {
     await updateAuditStatus(audit.auditId, 'synced', {
-      syncedAt:   syncResult.syncedAt,
-      serverId:   syncResult.serverId,
-      lastError:  null,
+      syncedAt:  syncResult.syncedAt || new Date().toISOString(),
+      serverId:  syncResult.auditId,
+      lastError: null,
     });
     await removeSyncQueueEntry(audit.auditId);
     onProgress?.({ type: 'audit_ok', auditId: audit.auditId });
     return { success: true };
   } else {
     await updateAuditStatus(audit.auditId, 'pending_sync', {
-      lastError:  lastErr?.message,
-      attempts:   MAX_ATTEMPTS,
+      lastError: lastErr?.message,
+      attempts:  MAX_ATTEMPTS,
     });
     onProgress?.({ type: 'audit_error', auditId: audit.auditId, error: lastErr?.message });
     return { success: false, error: lastErr?.message };
@@ -123,7 +128,12 @@ async function syncAudit(audit, onProgress) {
 
 // ── Punto de entrada principal ────────────────────────────────────────────────
 export async function syncAll(onProgress) {
-  const audits = await getAllAudits();
+  if (GAS_ENDPOINT.includes('REEMPLAZA_CON_TU_URL')) {
+    onProgress?.({ type: 'config_error', message: 'GAS_ENDPOINT no configurado. Despliega el script primero.' });
+    return { synced: 0, errors: 0, configError: true };
+  }
+
+  const audits  = await getAllAudits();
   const pending = audits.filter(a => a.status === 'pending_sync');
 
   if (pending.length === 0) {
@@ -153,7 +163,7 @@ function stripLocalImageData(audit) {
   const clone = JSON.parse(JSON.stringify(audit));
   for (const ans of clone.answers || []) {
     for (const img of ans.images || []) {
-      delete img.localUri; // no enviar base64 al servidor
+      delete img.localUri;
       delete img.thumbnail;
     }
   }

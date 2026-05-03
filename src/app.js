@@ -1,6 +1,6 @@
 // app.js — Orquestador principal de TradeTrack Pro 2026
 
-import { loadMasterData, searchPDV, getRecords } from './master-data.js';
+import { loadMasterData, filterPDV, getRecords, getUniqueValues, getSource } from './master-data.js';
 import { initDB, saveAudit, addToSyncQueue, countPendingAudits, MAX_LOCAL_AUDITS } from './db.js';
 import { processImage, generateImageId, createThumbnail } from './image-utils.js';
 import { flattenQuestions, validateChecklist, calculateScore } from './validation.js';
@@ -16,6 +16,8 @@ const state = {
   gpsCoords:      null,
   syncing:        false,
   saving:         false,
+  filterComuna:   '',
+  filterFormato:  '',
 };
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────────
@@ -121,13 +123,30 @@ function updateSourceBadge(source, count) {
 
 // ── PDV Selector ───────────────────────────────────────────────────────────────
 function renderPdvSelector() {
+  const comunas  = getUniqueValues('comuna');
+  const formatos = getUniqueValues('formato');
+  const hasFilters = comunas.length > 0 || formatos.length > 0;
+
   return `
     <section class="card pdv-selector-card">
       <h2 class="section-title pdv-section-title">📍 Seleccionar Punto de Venta</h2>
+      ${hasFilters ? `
+      <div class="pdv-filters">
+        ${comunas.length > 0 ? `
+        <select id="filter-comuna" class="filter-select" title="Filtrar por comuna">
+          <option value="">🏙️ Todas las comunas</option>
+          ${comunas.map(c => `<option value="${esc(c)}" ${state.filterComuna === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}
+        </select>` : ''}
+        ${formatos.length > 0 ? `
+        <select id="filter-formato" class="filter-select" title="Filtrar por formato">
+          <option value="">🍺 Barril y Botella</option>
+          ${formatos.map(f => `<option value="${esc(f)}" ${state.filterFormato === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}
+        </select>` : ''}
+      </div>` : ''}
       <div class="search-wrapper">
         <span class="search-icon-left">🔍</span>
         <input type="search" id="pdv-search" class="search-input"
-          placeholder="Buscar por nombre, fantasía, ID, ejecutivo, zona…"
+          placeholder="Buscar por nombre, fantasía, ID, ejecutivo…"
           autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
       </div>
       <ul id="search-results" class="search-results hidden"></ul>
@@ -243,11 +262,25 @@ function renderInput(q) {
     case 'textarea':
       return `<textarea id="${id}" class="field-input field-textarea" data-qid="${q.questionId}"
                 placeholder="${esc(q.placeholder || '')}" rows="3">${esc(String(val))}</textarea>`;
-    case 'select':
+    case 'select': {
+      // Si alguna opción tiene imagen → selector visual de tarjetas
+      const hasImages = (q.options || []).some(o => o.image);
+      if (hasImages) {
+        return `<div class="image-select-group" data-qid="${q.questionId}">
+          ${(q.options || []).map(o => `
+            <div class="img-option ${val === o.value ? 'img-option-selected' : ''}"
+                 data-qid="${q.questionId}" data-val="${esc(o.value)}" role="button" tabindex="0">
+              ${o.image ? `<img src="${esc(o.image)}" class="glass-img" alt="${esc(o.label)}" loading="lazy" onerror="this.style.display='none'" />` : '<div class="glass-img-placeholder"></div>'}
+              <span class="img-option-label">${esc(o.label)}</span>
+            </div>
+          `).join('')}
+        </div>`;
+      }
       return `<select id="${id}" class="field-input field-select" data-qid="${q.questionId}">
         <option value="">— Selecciona una opción —</option>
         ${(q.options || []).map(o => `<option value="${esc(o.value)}" ${val === o.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}
       </select>`;
+    }
     case 'yesno':
       return `<div class="yesno-group" data-qid="${q.questionId}">
         <button type="button" class="yesno-btn ${val === 'si' ? 'active-yes' : ''}" data-qid="${q.questionId}" data-val="si">Sí</button>
@@ -302,6 +335,16 @@ function renderBottomBar() {
 function attachAllListeners() {
   const searchInput = document.getElementById('pdv-search');
   searchInput?.addEventListener('input', debounce(handlePdvSearch, 250));
+
+  // Filtros de PDV
+  document.getElementById('filter-comuna')?.addEventListener('change', e => {
+    state.filterComuna = e.target.value;
+    triggerFilteredSearch();
+  });
+  document.getElementById('filter-formato')?.addEventListener('change', e => {
+    state.filterFormato = e.target.value;
+    triggerFilteredSearch();
+  });
 
   const sectionsEl = document.getElementById('sections-container');
   sectionsEl?.addEventListener('input',  handleFieldInput);
@@ -366,6 +409,20 @@ function handleOtrosText(qid, text) {
 }
 
 function handleSectionClick(e) {
+  // Selector visual de cristalería (img-option)
+  const imgOption = e.target.closest('.img-option');
+  if (imgOption) {
+    const qid = imgOption.dataset.qid;
+    const val = imgOption.dataset.val;
+    setAnswer(qid, val);
+    const group = document.querySelector(`.image-select-group[data-qid="${qid}"]`);
+    group?.querySelectorAll('.img-option').forEach(opt => {
+      opt.classList.toggle('img-option-selected', opt.dataset.val === val);
+    });
+    return;
+  }
+
+  // Botones Sí/No
   const yesnoBtn = e.target.closest('.yesno-btn');
   if (yesnoBtn) {
     const qid = yesnoBtn.dataset.qid;
@@ -379,6 +436,7 @@ function handleSectionClick(e) {
     updateConditionalVisibility();
     return;
   }
+
   const delBtn = e.target.closest('.thumb-delete');
   if (delBtn) removeImage(delBtn.dataset.qid, delBtn.dataset.imgid);
 }
@@ -400,8 +458,28 @@ function updateConditionalVisibility() {
 function handlePdvSearch(e) {
   const query = e.target.value.trim();
   const cfg   = state.config?.pdvSelector || {};
-  if (query.length < (cfg.minChars || 2)) { hideSearchResults(); return; }
-  const results = searchPDV(query, cfg.searchFields || ['name', 'fantasyName'], cfg.maxResults || 8);
+  const hasFilters = state.filterComuna || state.filterFormato;
+  if (query.length < (cfg.minChars || 2) && !hasFilters) { hideSearchResults(); return; }
+  const results = filterPDV(
+    query,
+    cfg.searchFields || ['name', 'fantasyName'],
+    cfg.maxResults || 10,
+    { comuna: state.filterComuna, formato: state.filterFormato }
+  );
+  renderSearchResults(results);
+}
+
+function triggerFilteredSearch() {
+  const query = document.getElementById('pdv-search')?.value?.trim() || '';
+  const cfg   = state.config?.pdvSelector || {};
+  const hasFilters = state.filterComuna || state.filterFormato;
+  if (!hasFilters && query.length < (cfg.minChars || 2)) { hideSearchResults(); return; }
+  const results = filterPDV(
+    query,
+    cfg.searchFields || ['name', 'fantasyName'],
+    cfg.maxResults || 10,
+    { comuna: state.filterComuna, formato: state.filterFormato }
+  );
   renderSearchResults(results);
 }
 
@@ -411,12 +489,16 @@ function renderSearchResults(results) {
   if (results.length === 0) {
     ul.innerHTML = '<li class="search-no-results">Sin resultados para tu búsqueda</li>';
   } else {
-    ul.innerHTML = results.map(pdv => `
-      <li class="search-result-item" data-pdv-id="${esc(pdv.pdvId)}" tabindex="0" role="option">
-        <div class="result-fantasy">${esc(pdv.fantasyName || pdv.name)}</div>
-        <div class="result-meta">${esc(pdv.pdvId)} · ${esc(pdv.executiveName || '—')} · ${esc(pdv.zone || '—')}</div>
-      </li>
-    `).join('');
+    ul.innerHTML = results.map(pdv => {
+      const fmtTag = pdv.formato ? `<span class="result-tag">${esc(pdv.formato)}</span>` : '';
+      const comTag = pdv.comuna  ? `<span class="result-tag result-tag-comuna">${esc(pdv.comuna)}</span>` : '';
+      return `
+        <li class="search-result-item" data-pdv-id="${esc(pdv.pdvId)}" tabindex="0" role="option">
+          <div class="result-fantasy">${esc(pdv.fantasyName || pdv.name)} ${fmtTag}${comTag}</div>
+          <div class="result-meta">${esc(pdv.pdvId)} · ${esc(pdv.executiveName || '—')} · ${esc(pdv.zone || '—')}</div>
+        </li>
+      `;
+    }).join('');
     ul.querySelectorAll('.search-result-item').forEach(li => {
       const selectFn = () => { selectPdv(li.dataset.pdvId); };
       li.addEventListener('click',   selectFn);
@@ -637,14 +719,20 @@ async function handleSync() {
   if (labelEl) labelEl.textContent = 'Sincronizando…';
 
   try {
-    const { synced, errors } = await syncAll(ev => {
-      if (ev.type === 'audit_ok') showToast(`✓ Auditoría ${ev.auditId} sincronizada`, 'success');
+    const result = await syncAll(ev => {
+      if (ev.type === 'audit_ok')     showToast(`✓ Auditoría ${ev.auditId} sincronizada`, 'success');
+      if (ev.type === 'config_error') showToast(`⚙️ GAS no configurado: pega la URL del script en sync-manager.js`, 'error');
     });
-    const msg = synced > 0
-      ? `✅ ${synced} auditoría(s) sincronizada(s)${errors ? `, ${errors} con error` : ''}.`
-      : errors > 0 ? `⚠️ ${errors} auditoría(s) con error.`
-      : '✓ Todo sincronizado.';
-    showToast(msg, synced > 0 ? 'success' : errors > 0 ? 'error' : 'info');
+    const { synced, errors, configError } = result;
+    if (configError) {
+      // Ya se mostró el toast de config_error arriba
+    } else {
+      const msg = synced > 0
+        ? `✅ ${synced} auditoría(s) enviada(s) al Drive${errors ? `, ${errors} con error` : ''}.`
+        : errors > 0 ? `⚠️ ${errors} auditoría(s) con error al enviar.`
+        : '✓ Todo sincronizado con Google Drive.';
+      showToast(msg, synced > 0 ? 'success' : errors > 0 ? 'error' : 'info');
+    }
   } catch (err) {
     showToast(`❌ Error: ${err.message}`, 'error');
   } finally {

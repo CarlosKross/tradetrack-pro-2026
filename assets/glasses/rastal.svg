@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 160" width="130" height="160">
+  <!-- JARRO RASTAL — masskrug/jarro alemán con asa y facetas -->
+
+  <!-- Sombra base -->
+  <ellipse cx="58" cy="150" rx="34" ry="5" fill="rgba(0,0,0,0.08)"/>
+
+  <!-- Asa del jarro (detrás del cuerpo) -->
+  <path d="M85,35 Q112,35 112,75 Q112,115 85,115"
+        fill="rgba(220,238,250,0.5)" stroke="#b0c4d8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M85,42 Q104,42 104,75 Q104,108 85,108"
+        fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
+
+  <!-- Cuerpo del jarro (rectangular redondeado) -->
+  <rect x="10" y="12" width="75" height="130" rx="8" ry="8"
+        fill="rgba(235,248,255,0.45)" stroke="#b0c4d8" stroke-width="1.8"/>
+
+  <!-- Tapa/borde superior del jarro -->
+  <ellipse cx="47" cy="12" rx="37" ry="6" fill="rgba(220,238,250,0.6)" stroke="#b0c4d8" stroke-width="1.5"/>
+  <ellipse cx="47" cy="12" rx="30" ry="4" fill="rgba(230,245,255,0.7)"/>
+
+  <!-- Cerveza (ámbar) -->
+  <rect x="11" y="30" width="73" height="111" rx="6"
+        fill="rgba(210,145,10,0.50)"/>
+
+  <!-- Facetas / óvalos decorativos del Masskrug (3x2 grid) -->
+  <ellipse cx="29" cy="60" rx="10" ry="14" fill="none" stroke="rgba(180,210,230,0.7)" stroke-width="1.5"/>
+  <ellipse cx="47" cy="60" rx="10" ry="14" fill="none" stroke="rgba(180,210,230,0.7)" stroke-width="1.5"/>
+  <ellipse cx="65" cy="60" rx="10" ry="14" fill="none" stroke="rgba(180,210,230,0.7)" stroke-width="1.5"/>
+  <ellipse cx="29" cy="96" rx="10" ry="14" fill="none" stroke="rgba(180,210,230,0.7)" stroke-width="1.5"/>
+  <ellipse cx="47" cy="96" rx="10" ry="14" fill="none" stroke="rgba(180,210,230,0.7)" stroke-width="1.5"/>
+  <ellipse cx="65" cy="96" rx="10" ry="14" fill="none" stroke="rgba(180,210,230,0.7)" stroke-width="1.5"/>
+
+  <!-- Reflejos del vidrio -->
+  <path d="M14,110 L13,30 Q13,18 20,14" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Espuma en parte superior -->
+  <ellipse cx="47" cy="30" rx="36" ry="10" fill="white" opacity="0.92"/>
+  <ellipse cx="32" cy="28" rx="10" ry="6" fill="white" opacity="0.8"/>
+  <ellipse cx="60" cy="27" rx="9" ry="5" fill="white" opacity="0.8"/>
+
+  <!-- Logo circular Kross -->
+  <circle cx="47" cy="76" r="22" fill="rgba(232,160,32,0.15)" stroke="#E8A020" stroke-width="1.5"/>
+  <circle cx="47" cy="76" r="17" fill="rgba(232,160,32,0.2)" stroke="#E8A020" stroke-width="1"/>
+  <!-- Caballo / ícono Kross simplificado -->
+  <text x="47" y="74" text-anchor="middle" font-size="16" fill="#E8A020">🐎</text>
+  <!-- Texto circular -->
+  <text x="47" y="86" text-anchor="middle" font-family="Arial" font-size="5.5" fill="#E8A020" font-weight="700" letter-spacing="1">CERVEZA KROSS</text>
+
+  <!-- Base del jarro -->
+  <rect x="10" y="137" width="75" height="7" rx="4" fill="rgba(200,225,240,0.6)" stroke="#b0c4d8" stroke-width="1.2"/>
+
+  <!-- Etiqueta -->
+  <text x="58" y="158" text-anchor="middle" font-family="Arial" font-size="10" fill="#444" font-weight="700">Jarro Rastal</text>
+</svg>

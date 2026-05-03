@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 160" width="110" height="160">
+  <!-- CONIC — American Pint / vaso cónico (estrecho abajo, ancho arriba) -->
+
+  <!-- Sombra base -->
+  <ellipse cx="55" cy="150" rx="36" ry="5" fill="rgba(0,0,0,0.08)"/>
+
+  <!-- Cuerpo del vaso (troncocónico: más ancho arriba) -->
+  <path d="M18,140 L28,22 Q30,10 42,8 L68,8 Q80,10 82,22 L92,140 Z"
+        fill="rgba(235,248,255,0.45)" stroke="#b0c4d8" stroke-width="1.8" stroke-linejoin="round"/>
+
+  <!-- Reflejos del vidrio (izquierda) -->
+  <path d="M20,122 L28,30 Q29,16 37,11" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M22,138 L30,80" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Cerveza (ámbar) -->
+  <path d="M19,140 L29,24 Q31,13 42,11 L68,11 Q79,13 81,24 L91,140 Z"
+        fill="rgba(210,145,10,0.52)"/>
+
+  <!-- Espuma en la parte superior (pinta tiene bastante espuma) -->
+  <ellipse cx="55" cy="30" rx="37" ry="12" fill="white" opacity="0.93"/>
+  <ellipse cx="38" cy="27" rx="11" ry="7" fill="white" opacity="0.85"/>
+  <ellipse cx="72" cy="26" rx="10" ry="6" fill="white" opacity="0.85"/>
+  <ellipse cx="55" cy="24" rx="13" ry="6" fill="white" opacity="0.8"/>
+
+  <!-- Logo circular Kross (igual que rastal) -->
+  <circle cx="55" cy="85" r="24" fill="rgba(232,160,32,0.15)" stroke="#E8A020" stroke-width="1.5"/>
+  <circle cx="55" cy="85" r="18" fill="rgba(232,160,32,0.2)" stroke="#E8A020" stroke-width="1"/>
+  <!-- Caballo / ícono Kross simplificado -->
+  <text x="55" y="84" text-anchor="middle" font-size="18" fill="#E8A020">🐎</text>
+  <!-- Texto circular -->
+  <text x="55" y="95" text-anchor="middle" font-family="Arial" font-size="5.5" fill="#E8A020" font-weight="700" letter-spacing="1">CERVEZA KROSS</text>
+
+  <!-- Base del vaso (ligeramente más estrecha) -->
+  <path d="M18,140 Q18,147 55,148 Q92,147 92,140" fill="rgba(200,225,240,0.5)" stroke="#b0c4d8" stroke-width="1.5"/>
+
+  <!-- Etiqueta -->
+  <text x="55" y="158" text-anchor="middle" font-family="Arial" font-size="10" fill="#444" font-weight="700">Conic</text>
+</svg>

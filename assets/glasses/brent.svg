@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 165" width="100" height="165">
+  <!-- BRENT — vaso slim/pilsner alto y recto -->
+
+  <!-- Sombra base -->
+  <ellipse cx="50" cy="153" rx="25" ry="5" fill="rgba(0,0,0,0.08)"/>
+
+  <!-- Cuerpo del vaso (cilíndrico, muy leve curva hacia arriba) -->
+  <path d="M24,143 L20,55 Q20,12 32,8 L68,8 Q80,12 80,55 L76,143 Z"
+        fill="rgba(235,248,255,0.45)" stroke="#b0c4d8" stroke-width="1.8" stroke-linejoin="round"/>
+
+  <!-- Reflejos del vidrio -->
+  <path d="M22,125 L19,50 Q19,22 27,14" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M25,138 L21,85" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Cerveza (líquido ámbar) -->
+  <path d="M25,143 L21,57 Q21,15 32,11 L68,11 Q79,15 79,57 L75,143 Z"
+        fill="rgba(210,145,10,0.52)"/>
+
+  <!-- Espuma en la parte superior -->
+  <ellipse cx="50" cy="38" rx="28" ry="9" fill="white" opacity="0.9"/>
+  <ellipse cx="37" cy="36" rx="9" ry="5" fill="white" opacity="0.8"/>
+  <ellipse cx="63" cy="35" rx="8" ry="5" fill="white" opacity="0.8"/>
+
+  <!-- Marca de 500ml -->
+  <line x1="24" y1="44" x2="35" y2="44" stroke="#999" stroke-width="1.2"/>
+  <text x="37" y="47" font-family="Arial" font-size="7" fill="#999">500ml</text>
+
+  <!-- Logo KROSS grande (más centrado en el vaso largo) -->
+  <text x="50" y="96" text-anchor="middle"
+        font-family="Arial Black, Arial" font-weight="900" font-size="21"
+        fill="#E8A020" letter-spacing="1">KROSS</text>
+  <text x="50" y="108" text-anchor="middle"
+        font-family="Arial Black, Arial" font-weight="900" font-size="8"
+        fill="#E8A020" letter-spacing="2">™</text>
+
+  <!-- Texto CERVEZA KROSS -->
+  <text x="50" y="128" text-anchor="middle"
+        font-family="Arial" font-size="6" fill="#888" letter-spacing="1.5">CERVEZA KROSS</text>
+
+  <!-- Base del vaso (ligeramente más ancha) -->
+  <path d="M24,143 Q22,150 50,150 Q78,150 76,143" fill="rgba(200,225,240,0.5)" stroke="#b0c4d8" stroke-width="1.5"/>
+
+  <!-- Etiqueta -->
+  <text x="50" y="163" text-anchor="middle" font-family="Arial" font-size="10" fill="#444" font-weight="700">Brent</text>
+</svg>
