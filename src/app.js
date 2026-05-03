@@ -492,10 +492,12 @@ function renderSearchResults(results) {
     ul.innerHTML = results.map(pdv => {
       const fmtTag = pdv.formato ? `<span class="result-tag">${esc(pdv.formato)}</span>` : '';
       const comTag = pdv.comuna  ? `<span class="result-tag result-tag-comuna">${esc(pdv.comuna)}</span>` : '';
+      const addrLine = pdv.address ? `<div class="result-address">📍 ${esc(pdv.address)}</div>` : '';
       return `
         <li class="search-result-item" data-pdv-id="${esc(pdv.pdvId)}" tabindex="0" role="option">
           <div class="result-fantasy">${esc(pdv.fantasyName || pdv.name)} ${fmtTag}${comTag}</div>
           <div class="result-meta">${esc(pdv.pdvId)} · ${esc(pdv.executiveName || '—')} · ${esc(pdv.zone || '—')}</div>
+          ${addrLine}
         </li>
       `;
     }).join('');
