@@ -172,7 +172,7 @@ function updateClientCard() {
         <div class="detail-item"><span class="detail-label">Cliente</span><span class="detail-value">${esc(pdv.name)}</span></div>
         <div class="detail-item"><span class="detail-label">ID PDV</span><span class="detail-value mono">${esc(pdv.pdvId)}</span></div>
         <div class="detail-item"><span class="detail-label">Dirección</span><span class="detail-value">${esc(pdv.address || '—')}</span></div>
-        <div class="detail-item"><span class="detail-label">Zona / Ruta</span><span class="detail-value">${esc(pdv.zone || '—')}</span></div>
+        <div class="detail-item"><span class="detail-label">Comuna / Zona</span><span class="detail-value">${esc(pdv.zone || '—')}</span></div>
       </div>
     </div>
   `;
@@ -496,7 +496,8 @@ function renderSearchResults(results) {
     ul.innerHTML = results.map(pdv => {
       const fmtTag = pdv.formato ? `<span class="result-tag">${esc(pdv.formato)}</span>` : '';
       const comTag = pdv.comuna  ? `<span class="result-tag result-tag-comuna">${esc(pdv.comuna)}</span>` : '';
-      const addrLine = pdv.address ? `<div class="result-address">📍 ${esc(pdv.address)}</div>` : '';
+      const addrParts = [pdv.address, !pdv.address?.includes(pdv.comuna) ? pdv.comuna : ''].filter(Boolean);
+      const addrLine = addrParts.length ? `<div class="result-address">📍 ${esc(addrParts.join(', '))}</div>` : '';
       return `
         <li class="search-result-item" data-pdv-id="${esc(pdv.pdvId)}" tabindex="0" role="option">
           <div class="result-fantasy">${esc(pdv.fantasyName || pdv.name)} ${fmtTag}${comTag}</div>

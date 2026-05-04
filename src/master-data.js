@@ -11,7 +11,8 @@ const COLUMN_MAP = {
   name:          ['cliente', 'nombre cliente', 'razón social', 'razon social', 'nombre_cliente', 'razon_social'],
   fantasyName:   ['nombre fantasía', 'nombre de fantasía', 'fantasía', 'nombre fantasia', 'nombre de fantasia', 'fantasia', 'nombre de fantasía'],
   executiveName: ['nombre ejecutivo', 'ejecutivo', 'ejecutivo comercial', 'nombre_ejecutivo'],
-  address:       ['dirección', 'direccion', 'address', 'dir', 'direccion completa', 'n + d'],
+  address:       ['dirección', 'direccion', 'address', 'dir', 'direccion completa'],
+  address2:      ['n + d', 'n+d', 'numero y direccion', 'barrio', 'sector'],
   zone:          ['zona', 'ruta', 'territorio', 'zone', 'región', 'region'],
   comuna:        ['comuna', 'localidad', 'ciudad'],
   formato:       ['formato', 'format', 'tipo cliente', 'tipo', 'canal'],
@@ -104,13 +105,17 @@ function rowsToRecords(rows) {
     .map((cols, i) => {
       const get = field => (idx[field] !== undefined ? (cols[idx[field]] || '').trim() : '');
 
-      // Zona: combinar Región y Comuna si existen
+      // Dirección completa: combinar "Dirección" + "N + D" si ambas existen y son distintas
+      const street  = get('address');
+      const street2 = get('address2');
+      const fullAddress = street && street2 && street !== street2
+        ? `${street}, ${street2}`
+        : street || street2;
+
+      // Zona: combinar Región y Comuna siempre
       const comunaVal = get('comuna') || (comunaCol >= 0 ? (cols[comunaCol] || '').trim() : '');
-      let zone = get('zone');
-      if (!zone) {
-        const region = regionCol >= 0 ? (cols[regionCol] || '').trim() : '';
-        zone = [comunaVal, region].filter(Boolean).join(' — ');
-      }
+      const regionVal = get('zone')   || (regionCol >= 0 ? (cols[regionCol] || '').trim() : '');
+      const zone = [comunaVal, regionVal].filter(Boolean).join(' — ') || regionVal;
 
       const lat = parseFloat(get('latitude'));
       const lng = parseFloat(get('longitude'));
@@ -119,7 +124,7 @@ function rowsToRecords(rows) {
         name:          get('name'),
         fantasyName:   get('fantasyName') || get('name'),
         executiveName: get('executiveName'),
-        address:       get('address'),
+        address:       fullAddress,
         zone,
         comuna:        comunaVal,
         formato:       get('formato'),
