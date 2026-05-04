@@ -201,8 +201,12 @@ function renderSections() {
 }
 
 function renderQuestion(q) {
-  const photoRequired = q.photo === 'required';
-  const photoAllowed  = q.photo === 'required' || q.photo === 'optional';
+  const val = state.answers[q.questionId]?.value ?? null;
+  const isNegativeAnswer =
+    (q.type === 'yesno'  && val === 'no') ||
+    (q.type === 'select' && (val === 'no_tiene' || val === 'no'));
+  const photoRequired = q.photo === 'required' && !isNegativeAnswer;
+  const photoAllowed  = (q.photo === 'required' || q.photo === 'optional') && !isNegativeAnswer;
   const visible = isQuestionVisible(q);
   return `
     <div class="question-block${visible ? '' : ' question-hidden'}" id="qblock-${q.questionId}" data-condition='${q.condition ? JSON.stringify(q.condition) : ''}'>
@@ -213,7 +217,7 @@ function renderQuestion(q) {
         <div class="question-badges">
           ${q.required    ? '<span class="badge badge-required">Requerido</span>'        : ''}
           ${photoRequired ? '<span class="badge badge-photo">📷 Foto obligatoria</span>' : ''}
-          ${q.photo === 'optional' ? '<span class="badge badge-photo-opt">📷 Foto opcional</span>' : ''}
+          ${q.photo === 'optional' && !isNegativeAnswer ? '<span class="badge badge-photo-opt">📷 Foto opcional</span>' : ''}
         </div>
       </div>
       ${q.hint ? `<div class="question-hint">${esc(q.hint)}</div>` : ''}
@@ -531,9 +535,47 @@ function setAnswer(qid, value) {
   if (!state.answers[qid]) state.answers[qid] = { value: null, images: [] };
   state.answers[qid].value = value;
   updateConditionalVisibility();
+  refreshQuestionPhotoUI(qid);
   updateScore();
   updateSaveButton();
   markFieldOk(qid);
+}
+
+// Actualiza dinámicamente el badge de foto y el botón cámara según la respuesta
+function refreshQuestionPhotoUI(qid) {
+  const q = flattenQuestions(state.config).find(x => x.questionId === qid);
+  if (!q || !q.photo) return;
+  const val = state.answers[qid]?.value ?? null;
+  const isNegative =
+    (q.type === 'yesno'  && val === 'no') ||
+    (q.type === 'select' && (val === 'no_tiene' || val === 'no'));
+
+  const block = document.getElementById(`qblock-${qid}`);
+  if (!block) return;
+
+  // Actualizar badge de foto
+  const badgesEl = block.querySelector('.question-badges');
+  if (badgesEl) {
+    const existing = badgesEl.querySelector('.badge-photo, .badge-photo-opt');
+    if (existing) existing.remove();
+    if (!isNegative) {
+      const span = document.createElement('span');
+      if (q.photo === 'required') { span.className = 'badge badge-photo'; span.textContent = '📷 Foto obligatoria'; }
+      else                        { span.className = 'badge badge-photo-opt'; span.textContent = '📷 Foto opcional'; }
+      badgesEl.appendChild(span);
+    }
+  }
+
+  // Mostrar/ocultar botones de media
+  const inputRow = block.querySelector('.question-input-row');
+  if (!inputRow) return;
+  const existingMedia = inputRow.querySelector('.media-buttons');
+  if (isNegative) {
+    existingMedia?.remove();
+  } else if (!existingMedia && (q.photo === 'required' || q.photo === 'optional')) {
+    inputRow.insertAdjacentHTML('beforeend', renderMediaButtons(q));
+    // La delegación de eventos en sections-container maneja los inputs automáticamente
+  }
 }
 
 async function handlePhotoCapture(e) {

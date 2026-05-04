@@ -54,13 +54,19 @@ export function validateChecklist(config, answers, selectedPdv) {
     }
 
     if (q.photo === 'required') {
-      const imgs = ans?.images || [];
-      if (imgs.length === 0) {
-        errors.push({
-          type:       'photo_required',
-          questionId: q.questionId,
-          message:    `"${q.label}" requiere al menos una foto.`,
-        });
+      // Si la respuesta es negativa, no exigir foto
+      const isNegative =
+        (q.type === 'yesno'  && val === 'no') ||
+        (q.type === 'select' && (val === 'no_tiene' || val === 'no'));
+      if (!isNegative) {
+        const imgs = ans?.images || [];
+        if (imgs.length === 0) {
+          errors.push({
+            type:       'photo_required',
+            questionId: q.questionId,
+            message:    `"${q.label}" requiere al menos una foto.`,
+          });
+        }
       }
     }
   }
