@@ -540,8 +540,9 @@ body {
   background: var(--color-accent);
   color: #fff;
 }
-.btn-save:hover:not(:disabled)    { background: var(--color-accent-dk); }
-.btn-save:not(:disabled) { box-shadow: 0 2px 12px rgba(232,160,32,.4); }
+.btn-save:hover { background: var(--color-accent-dk); }
+.btn-save-ready  { box-shadow: 0 2px 12px rgba(232,160,32,.5); }
+.btn-save-incomplete { opacity: .6; }
 
 .pending-badge {
   position: absolute;

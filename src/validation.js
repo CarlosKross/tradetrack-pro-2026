@@ -54,17 +54,20 @@ export function validateChecklist(config, answers, selectedPdv) {
     }
 
     if (q.photo === 'required') {
-      // Si la respuesta es negativa, no exigir foto
-      const isNegative =
-        (q.type === 'yesno'  && val === 'no') ||
-        (q.type === 'select' && (val === 'no_tiene' || val === 'no'));
-      if (!isNegative) {
+      // Foto solo es obligatoria cuando la respuesta confirma presencia del elemento:
+      // - yesno: solo si respondió "si"
+      // - select: solo si seleccionó algo distinto de "no_tiene"
+      // - text/number/textarea/multiselect: nunca bloquear (foto es evidencia opcional)
+      const photoRequired =
+        (q.type === 'yesno'       && val === 'si') ||
+        (q.type === 'select'      && hasValue && val !== 'no_tiene' && val !== 'no');
+      if (photoRequired) {
         const imgs = ans?.images || [];
         if (imgs.length === 0) {
           errors.push({
             type:       'photo_required',
             questionId: q.questionId,
-            message:    `"${q.label}" requiere al menos una foto.`,
+            message:    `"${q.label}" requiere al menos una foto como evidencia.`,
           });
         }
       }

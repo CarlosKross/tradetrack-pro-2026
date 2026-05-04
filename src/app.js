@@ -202,11 +202,18 @@ function renderSections() {
 
 function renderQuestion(q) {
   const val = state.answers[q.questionId]?.value ?? null;
+  const hasVal = val !== null && val !== undefined && String(val).trim() !== '';
+  // Foto obligatoria solo cuando yesno=si o select con valor positivo
+  const photoRequired =
+    q.photo === 'required' && (
+      (q.type === 'yesno'  && val === 'si') ||
+      (q.type === 'select' && hasVal && val !== 'no_tiene' && val !== 'no')
+    );
+  // Ocultar cámara si la respuesta es claramente negativa
   const isNegativeAnswer =
     (q.type === 'yesno'  && val === 'no') ||
     (q.type === 'select' && (val === 'no_tiene' || val === 'no'));
-  const photoRequired = q.photo === 'required' && !isNegativeAnswer;
-  const photoAllowed  = (q.photo === 'required' || q.photo === 'optional') && !isNegativeAnswer;
+  const photoAllowed = (q.photo === 'required' || q.photo === 'optional') && !isNegativeAnswer;
   const visible = isQuestionVisible(q);
   return `
     <div class="question-block${visible ? '' : ' question-hidden'}" id="qblock-${q.questionId}" data-condition='${q.condition ? JSON.stringify(q.condition) : ''}'>
@@ -546,7 +553,16 @@ function setAnswer(qid, value) {
 function refreshQuestionPhotoUI(qid) {
   const q = flattenQuestions(state.config).find(x => x.questionId === qid);
   if (!q || !q.photo) return;
-  const val = state.answers[qid]?.value ?? null;
+  const val    = state.answers[qid]?.value ?? null;
+  const hasVal = val !== null && val !== undefined && String(val).trim() !== '';
+
+  // Foto obligatoria: solo yesno=si o select positivo
+  const isPhotoRequired =
+    q.photo === 'required' && (
+      (q.type === 'yesno'  && val === 'si') ||
+      (q.type === 'select' && hasVal && val !== 'no_tiene' && val !== 'no')
+    );
+  // Ocultar cámara si respuesta negativa
   const isNegative =
     (q.type === 'yesno'  && val === 'no') ||
     (q.type === 'select' && (val === 'no_tiene' || val === 'no'));
@@ -561,8 +577,8 @@ function refreshQuestionPhotoUI(qid) {
     if (existing) existing.remove();
     if (!isNegative) {
       const span = document.createElement('span');
-      if (q.photo === 'required') { span.className = 'badge badge-photo'; span.textContent = '📷 Foto obligatoria'; }
-      else                        { span.className = 'badge badge-photo-opt'; span.textContent = '📷 Foto opcional'; }
+      if (isPhotoRequired) { span.className = 'badge badge-photo'; span.textContent = '📷 Foto obligatoria'; }
+      else if (q.photo)    { span.className = 'badge badge-photo-opt'; span.textContent = '📷 Foto opcional'; }
       badgesEl.appendChild(span);
     }
   }
@@ -575,7 +591,6 @@ function refreshQuestionPhotoUI(qid) {
     existingMedia?.remove();
   } else if (!existingMedia && (q.photo === 'required' || q.photo === 'optional')) {
     inputRow.insertAdjacentHTML('beforeend', renderMediaButtons(q));
-    // La delegación de eventos en sections-container maneja los inputs automáticamente
   }
 }
 
@@ -658,7 +673,9 @@ function updateSaveButton() {
   const btn = document.getElementById('btn-save');
   if (!btn || !state.config) return;
   const { valid } = validateChecklist(state.config, state.answers, state.selectedPdv);
-  btn.disabled = !valid || state.saving;
+  btn.disabled = state.saving;           // nunca deshabilitar por validación — mostrar errores al hacer clic
+  btn.classList.toggle('btn-save-ready', valid);
+  btn.classList.toggle('btn-save-incomplete', !valid);
 }
 
 // ── Validation errors ──────────────────────────────────────────────────────────
