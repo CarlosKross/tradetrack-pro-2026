@@ -191,6 +191,23 @@
           "placeholder": "Ej: Kross Dorada, Kross Märzen Premium..."
         }
       ]
+    },
+    {
+      "sectionId": "observaciones",
+      "title": "Observaciones",
+      "icon": "📝",
+      "questions": [
+        {
+          "questionId": "q_observaciones",
+          "label": "Observaciones generales del PDV",
+          "type": "textarea",
+          "required": false,
+          "photo": "optional",
+          "gallery": true,
+          "scoreValue": 0,
+          "placeholder": "Escribe aquí cualquier detalle adicional relevante del local: acuerdos especiales, problemas detectados, oportunidades de mejora, próximos pasos..."
+        }
+      ]
     }
   ]
 }
