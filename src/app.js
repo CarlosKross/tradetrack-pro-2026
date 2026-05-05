@@ -748,7 +748,7 @@ function buildPayload() {
         questionId: q.questionId,
         value:      ans.value,
         score:      scoreForAnswer(q, ans.value),
-        images:     ans.images.map(({ localImageId, serverImageId, status }) => ({ localImageId, serverImageId, status })),
+        images:     ans.images.map(({ localImageId, serverImageId, status, localUri }) => ({ localImageId, serverImageId, status, localUri })),
       };
     }),
     sync: { queuedAt: now, attempts: 0, maxAttempts: 3, lastError: null },
